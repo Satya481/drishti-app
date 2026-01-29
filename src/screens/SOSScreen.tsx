@@ -76,7 +76,7 @@ export default function SOSScreen({ navigation }: SOSScreenProps) {
           PermissionsAndroid.PERMISSIONS.SEND_SMS,
           {
             title: 'SMS Permission',
-            message: 'SafeRaasta needs permission to send emergency SMS',
+            message: 'Drishti needs permission to send emergency SMS',
             buttonNeutral: 'Ask Me Later',
             buttonNegative: 'Cancel',
             buttonPositive: 'OK',
@@ -167,7 +167,7 @@ export default function SOSScreen({ navigation }: SOSScreenProps) {
           PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
           {
             title: 'Microphone Permission',
-            message: 'SafeRaasta needs access to your microphone for voice activation',
+            message: 'Drishti needs access to your microphone for voice activation',
             buttonNeutral: 'Ask Me Later',
             buttonNegative: 'Cancel',
             buttonPositive: 'OK',
