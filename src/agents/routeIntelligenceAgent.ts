@@ -29,8 +29,8 @@ import { GEMINI_API_KEY } from '../config/keys';
 // CONSTANTS
 // ============================================================================
 
-const GEMINI_ENDPOINT = 
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+const GEMINI_ENDPOINT =
+  'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent';
 
 // ============================================================================
 // TYPE DEFINITIONS

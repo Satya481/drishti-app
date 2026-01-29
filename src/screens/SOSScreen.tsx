@@ -279,25 +279,29 @@ export default function SOSScreen({ navigation }: SOSScreenProps) {
     console.log('Saved contacts:', { primaryContact, secondaryContact, emergencyMessage });
   };
 
-  const handleEmergencyCall = (number: string) => {
+  const handleEmergencyCall = async (number: string) => {
     if (!number) {
       Alert.alert('No Contact', 'Please save an emergency contact first');
       return;
     }
 
-    const phoneUrl = Platform.OS === 'android' 
-      ? `tel:${number}` 
-      : `telprompt:${number}`;
+    try {
+      // Make the call
+      const phoneUrl = Platform.OS === 'android' 
+        ? `tel:${number}` 
+        : `telprompt:${number}`;
 
-    Linking.canOpenURL(phoneUrl)
-      .then((supported) => {
-        if (supported) {
-          return Linking.openURL(phoneUrl);
-        } else {
-          Alert.alert('Error', 'Unable to make phone call');
-        }
-      })
-      .catch((err) => console.error('Error making call:', err));
+      const supported = await Linking.canOpenURL(phoneUrl);
+      if (supported) {
+        await Linking.openURL(phoneUrl);
+        console.log('📞 Emergency call initiated to:', number);
+      } else {
+        Alert.alert('Error', 'Unable to make phone call');
+      }
+    } catch (error) {
+      console.error('❌ Error in emergency call sequence:', error);
+      Alert.alert('Error', 'An error occurred during emergency call');
+    }
   };
 
   const validatePhoneNumber = (number: string) => {
@@ -319,6 +323,7 @@ export default function SOSScreen({ navigation }: SOSScreenProps) {
     setShowAiCallPopup(true);
 
     try {
+      // Initiate AI Police Call
       const response = await fetch('https://us.api.bland.ai/v1/calls', {
         method: 'POST',
         headers: {
@@ -346,7 +351,7 @@ export default function SOSScreen({ navigation }: SOSScreenProps) {
       });
 
       const data = await response.json();
-      console.log('AI Police Call Response:', data);
+      console.log('✅ AI Police Call initiated:', data);
 
       if (!data.success) {
         setShowAiCallPopup(false);

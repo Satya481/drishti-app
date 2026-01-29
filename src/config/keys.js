@@ -4,3 +4,4 @@
 
 export const GOOGLE_API_KEY = 'AIzaSyAE8jFRCCsZ0PtL8JArylXYGg6d2jEZmN4';
 export const GEMINI_API_KEY = 'AIzaSyCy-kb_T0bp-zofQKqFrsxigw7-1kI_9RI';
+export const FAST2SMS = 'DOTSGtqlw6Baifesbx3HVFcJhzgKAkI9od1MXp2RvPmZNu0LUnJWkRUPzC1VDGeS4ghwtuKiXrvnbyHE';
