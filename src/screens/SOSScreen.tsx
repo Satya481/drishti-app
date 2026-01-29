@@ -15,6 +15,7 @@ import {
   PermissionsAndroid,
 } from 'react-native';
 import Voice from '@react-native-voice/voice';
+import RNGeolocation from 'react-native-geolocation-service';
 import InputField from '../components/InputField';
 import PrimaryButton from '../components/PrimaryButton';
 import BottomNavigation from '../components/BottomNavigation';
@@ -41,6 +42,121 @@ export default function SOSScreen({ navigation }: SOSScreenProps) {
   const [showVoiceIndicator, setShowVoiceIndicator] = useState(false);
   const [isBackgroundServiceActive, setIsBackgroundServiceActive] = useState(false);
   const [voiceTimeout, setVoiceTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
+  
+  // Hardcoded emergency number for SMS
+  const emergencyNumber = '8177970238';
+
+  // Request location permission
+  const requestLocationPermission = async (): Promise<boolean> => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
+        ]);
+        return (
+          granted['android.permission.ACCESS_FINE_LOCATION'] ===
+            PermissionsAndroid.RESULTS.GRANTED ||
+          granted['android.permission.ACCESS_COARSE_LOCATION'] ===
+            PermissionsAndroid.RESULTS.GRANTED
+        );
+      } catch (err) {
+        console.warn('Location permission error:', err);
+        return false;
+      }
+    }
+    return true;
+  };
+
+  // Request SMS permission
+  const requestSmsPermission = async (): Promise<boolean> => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.SEND_SMS,
+          {
+            title: 'SMS Permission',
+            message: 'SafeRaasta needs permission to send emergency SMS',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          }
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch (err) {
+        console.warn('SMS permission error:', err);
+        return false;
+      }
+    }
+    return true;
+  };
+
+  // Get current location
+  const getCurrentLocation = async (): Promise<{ latitude: number; longitude: number } | null> => {
+    return new Promise((resolve) => {
+      try {
+        RNGeolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            console.log('📍 Location obtained:', { latitude, longitude });
+            resolve({ latitude, longitude });
+          },
+          (error) => {
+            console.error('❌ Location error:', error);
+            resolve(null);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 10000,
+          }
+        );
+      } catch (e) {
+        console.error('Error getting location:', e);
+        resolve(null);
+      }
+    });
+  };
+
+  // Send emergency SMS using default SMS app
+  const sendEmergencySms = async (phoneNumber: string, location: { latitude: number; longitude: number } | null) => {
+    try {
+      const hasSmsPermission = await requestSmsPermission();
+      if (!hasSmsPermission) {
+        console.error('❌ SMS permission denied');
+        return false;
+      }
+
+      let message = 'EMERGENCY: I need help!';
+      if (emergencyMessage) {
+        message += ` ${emergencyMessage}`;
+      }
+      if (location) {
+        message += ` My location: https://maps.google.com/?q=${location.latitude},${location.longitude}`;
+      } else {
+        message += ' Location: Unable to determine current location';
+      }
+
+      console.log('📤 Sending emergency SMS to:', phoneNumber);
+      console.log('📨 Message:', message);
+
+      // Use Linking API to send SMS via default SMS app
+      const smsUrl = `sms:${phoneNumber}?body=${encodeURIComponent(message)}`;
+      
+      const canOpenUrl = await Linking.canOpenURL(smsUrl);
+      if (canOpenUrl) {
+        await Linking.openURL(smsUrl);
+        console.log('✅ SMS app opened with pre-filled message');
+        return true;
+      } else {
+        console.error('❌ Cannot open SMS app');
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Error in SMS process:', error);
+      return false;
+    }
+  };
 
   // Request microphone permission
   // Request microphone permission
@@ -323,6 +439,24 @@ export default function SOSScreen({ navigation }: SOSScreenProps) {
     setShowAiCallPopup(true);
 
     try {
+      // Get location and send emergency SMS
+      console.log('📍 Getting location for emergency SMS...');
+      const hasLocationPermission = await requestLocationPermission();
+      let location: { latitude: number; longitude: number } | null = null;
+      
+      if (hasLocationPermission) {
+        location = await getCurrentLocation();
+      }
+
+      // Send emergency SMS to hardcoded number
+      if (location) {
+        console.log('📤 Sending emergency SMS with location...');
+        await sendEmergencySms(emergencyNumber, location);
+      } else {
+        console.log('⚠️ Location not available, sending SMS without location...');
+        await sendEmergencySms(emergencyNumber, null);
+      }
+
       // Initiate AI Police Call
       const response = await fetch('https://us.api.bland.ai/v1/calls', {
         method: 'POST',

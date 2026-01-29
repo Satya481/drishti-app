@@ -1,4 +1,9 @@
 {
   "name": "SafeRaasta",
-  "displayName": "SafeRaasta"
+  "displayName": "SafeRaasta",
+  "extra": {
+    "eas": {
+      "projectId": "8fbc35f7-7d76-4a69-b69a-3aff5832be97"
+    }
+  }
 }
